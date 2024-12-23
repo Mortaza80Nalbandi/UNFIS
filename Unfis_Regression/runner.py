@@ -1,4 +1,4 @@
-from anfis import ANFIS
+from Unfis import Unfis
 import anfis_generator,plottingtools
 import torch
 from helpers import  _FastTensorDataLoader
@@ -33,7 +33,7 @@ def fit(model,train_data,valid_data,epochs,batch_size: int = 16,shuffle_batches:
             xb_train = xb_train.to(device)
             yb_train = yb_train.to(device)
                 # forward pass & loss calculation
-            train_pred = model(sb_train, xb_train)
+            train_pred = model( xb_train)
             loss = loss_functions(train_pred, yb_train)
 
             # perform backward, update weights, zero gradients
@@ -50,7 +50,7 @@ def fit(model,train_data,valid_data,epochs,batch_size: int = 16,shuffle_batches:
             sb_valid = sb_valid.to(device)
             xb_valid = xb_valid.to(device)
             yb_valid = yb_valid.to(device)
-            y_pred_valid = model(sb_valid, xb_valid)
+            y_pred_valid = model(xb_valid)
             # TODO: should not be a list.
             valid_loss_epoch += loss_functions(yb_valid, y_pred_valid).detach().cpu()
         valid_loss.append(valid_loss_epoch)
@@ -80,7 +80,7 @@ def predict( model,input):
         sb, xb = dataloader.dataset
         sb = sb.to(model.device)
         xb = xb.to(model.device)
-        y_pred_ = model(sb, xb)
+        y_pred_ = model(xb)
     return y_pred_.cpu()
 
 if __name__ == "__main__":
@@ -89,9 +89,9 @@ if __name__ == "__main__":
     # plain Vanilla ANFIS
     MEMBFUNCS, n_input = anfis_generator.get_membsFuncs(data_id=dataid)
     # generate some data (mackey chaotic time series)
-    X, X_train, X_valid, y, y_train, y_valid = anfis_generator.gen_data(data_id=dataid, n_obs=300, n_input=n_input)
+    X, X_train, X_valid, y, y_train, y_valid = anfis_generator.gen_data(data_id=dataid, n_obs=400, n_input=n_input)
     # create model and fit model
-    model = ANFIS(membfuncs=MEMBFUNCS, n_input=n_input, scale='Std',classes=3)
+    model = Unfis(membfuncs=MEMBFUNCS, n_input=n_input)
     losses = fit(model,train_data=[X_train, y_train], valid_data=[X_valid, y_valid], epochs=200,interval = 25)
     # predict data
     y_pred = predict(model,X)
